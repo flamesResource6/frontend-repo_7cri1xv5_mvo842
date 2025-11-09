@@ -1,28 +1,61 @@
-import { useState } from 'react'
+import { useMemo, useState } from "react";
+import Header from "./components/Header";
+import BalanceCard from "./components/BalanceCard";
+import QuickActions from "./components/QuickActions";
+import RecentList from "./components/RecentList";
+import AddTransactionSheet from "./components/AddTransactionSheet";
 
 function App() {
-  const [count, setCount] = useState(0)
+  const [sheetOpen, setSheetOpen] = useState(false);
+  const [sheetType, setSheetType] = useState("expense");
+  const [items, setItems] = useState([
+    { id: 1, type: "expense", title: "Kopi Kampus", amount: 18000, date: new Date().toISOString() },
+    { id: 2, type: "expense", title: "Transport Ojek", amount: 12000, date: new Date().toISOString() },
+    { id: 3, type: "income", title: "Uang Saku", amount: 500000, date: new Date().toISOString() },
+  ]);
+
+  const totals = useMemo(() => {
+    const income = items.filter(i => i.type === "income").reduce((s, i) => s + i.amount, 0);
+    const expense = items.filter(i => i.type === "expense").reduce((s, i) => s + i.amount, 0);
+    return { income, expense, balance: income - expense };
+  }, [items]);
+
+  const handleAdd = (type) => {
+    setSheetType(type);
+    setSheetOpen(true);
+  };
+
+  const handleSubmit = (payload) => {
+    setItems((prev) => [{ id: Date.now(), ...payload }, ...prev]);
+  };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 to-blue-50 flex items-center justify-center">
-      <div className="bg-white p-8 rounded-lg shadow-lg">
-        <h1 className="text-3xl font-bold text-gray-800 mb-4">
-          Vibe Coding Platform
-        </h1>
-        <p className="text-gray-600 mb-6">
-          Your AI-powered development environment
-        </p>
-        <div className="text-center">
-          <button
-            onClick={() => setCount(count + 1)}
-            className="bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-4 rounded"
-          >
-            Count is {count}
-          </button>
+    <div className="min-h-screen bg-gradient-to-b from-indigo-50 via-white to-white">
+      <Header />
+      <main className="pb-24">
+        <BalanceCard balance={totals.balance} income={totals.income} expense={totals.expense} />
+        <QuickActions onAdd={handleAdd} />
+        <RecentList />
+      </main>
+
+      <AddTransactionSheet
+        type={sheetType}
+        open={sheetOpen}
+        onClose={() => setSheetOpen(false)}
+        onSubmit={handleSubmit}
+      />
+
+      <div className="fixed inset-x-0 bottom-0 z-20 bg-white border-t">
+        <div className="mx-auto max-w-md px-4">
+          <div className="grid grid-cols-3 gap-3 py-3 text-center text-sm">
+            <button className="py-2 rounded-lg bg-indigo-600 text-white font-medium">Beranda</button>
+            <button className="py-2 rounded-lg hover:bg-slate-100" onClick={() => handleAdd("expense")}>Catat</button>
+            <button className="py-2 rounded-lg hover:bg-slate-100">Profil</button>
+          </div>
         </div>
       </div>
     </div>
-  )
+  );
 }
 
-export default App
+export default App;
